@@ -1,0 +1,2 @@
+DESC TABLE ecommerceonlineretail;
+
