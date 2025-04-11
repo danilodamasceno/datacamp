@@ -66,3 +66,46 @@ GROUP BY manufacturer,
 	company_location
 -- Add a filter for occurrence count greater than 1
 HAVING COUNT(*) >1;
+
+-- Create a new entity
+CREATE OR REPLACE TABLE ingredients (
+	-- Add unique identifier 
+    ingredient_id NUMBER (10,0) PRIMARY KEY,
+  	-- Add other attributes 
+    ingredient VARCHAR(255)
+);
+
+-- Create a new entity
+CREATE OR REPLACE TABLE reviews(
+	-- Add unique identifier 
+    review_id NUMBER(10,0) PRIMARY KEY,
+  	-- Add other attributes 
+    review VARCHAR(255)
+);
+
+SELECT
+	-- Create a sequential number
+	row_number() OVER (order by  TRIM(f.value)),
+	TRIM(f.value)
+FROM productqualityrating,
+LATERAL FLATTEN(INPUT => SPLIT(productqualityrating.ingredients, ';')) f
+-- Group the data
+group by TRIM(f.value);
+
+-- Add command to insert data
+INSERT INTO ingredients (ingredient_id, ingredient)
+SELECT
+	ROW_NUMBER() OVER (ORDER BY TRIM(f.value)),
+	TRIM(f.value)
+FROM productqualityrating,
+LATERAL FLATTEN(INPUT => SPLIT(productqualityrating.ingredients, ';')) f
+GROUP BY TRIM(f.value);
+
+-- Modify script for review
+INSERT INTO reviews (review_id, review)
+SELECT
+	ROW_NUMBER() OVER (ORDER BY TRIM(f.value)),
+	TRIM(f.value)
+FROM productqualityrating,
+LATERAL FLATTEN (INPUT => SPLIT(productqualityrating.review, ';')) f
+GROUP BY TRIM(f.value);
