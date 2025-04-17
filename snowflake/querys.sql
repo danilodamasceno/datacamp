@@ -109,3 +109,58 @@ SELECT
 FROM productqualityrating,
 LATERAL FLATTEN (INPUT => SPLIT(productqualityrating.review, ';')) f
 GROUP BY TRIM(f.value);
+
+-- Add new entity
+CREATE OR REPLACE TABLE manufacturers (
+  	-- Assign unique identifier
+  	manufacturer_id NUMBER(10,0) PRIMARY KEY,
+  	--Add other attributes
+  	manufacturer VARCHAR(255),
+  	company_location VARCHAR(255)
+);
+
+-- Add values to manufacturers
+INSERT INTO manufacturers (manufacturer_id, manufacturer, company_location)
+SELECT 
+	-- Generate a sequential number
+	ROW_NUMBER() OVER(ORDER BY manufacturer, company_location) AS manufacturer_id,
+    manufacturer, 
+	company_location
+FROM productqualityrating
+-- Aggregate data by the other attributes
+GROUP BY manufacturer, 
+	company_location;
+
+-- Create entity
+CREATE OR REPLACE TABLE locations (
+	-- Add unique identifier
+  	location_id NUMBER(10,0) PRIMARY KEY,
+  	-- Add main attribute
+  	location VARCHAR(255)
+);
+
+-- Populate entity from other entity's data
+INSERT INTO locations (location_id, location)
+SELECT 
+	ROW_NUMBER() OVER (ORDER BY company_location) AS location_id,
+	company_location
+FROM manufacturers
+company_location;
+
+-- Modify entity
+ALTER TABLE manufacturers
+-- Remove attribute
+DROP COLUMN IF EXISTS company_location;
+
+-- Create new entity
+CREATE OR REPLACE TABLE employee_training_details (
+  	-- Assign a unique identifier for the entity
+	employee_training_id NUMBER(10,0) PRIMARY KEY,
+  	-- Add new attribute
+    year NUMBER(4,0),
+  	-- Add new attributes to reference foreign entities
+  	employee_id NUMBER(38,0),
+    training_id NUMBER(38,0),
+    FOREIGN KEY (employee_id) REFERENCES employees(employee_id),
+    FOREIGN KEY (training_id) REFERENCES trainings(training_id)
+);
