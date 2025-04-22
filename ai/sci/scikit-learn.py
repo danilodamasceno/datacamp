@@ -119,3 +119,42 @@ scores = cross_val_score(ridge, X, y, cv=kf, scoring="neg_mean_squared_error")
 rmse = np.sqrt(-scores)
 print("Average RMSE: {}".format(np.mean(rmse)))
 print("Standard Deviation of the target array: {}".format(np.std(y)))
+
+
+#----------------
+
+# Print missing values for each column
+print(music_df.isna().sum().sort_values())
+
+# Remove values where less than 5% are missing
+music_df = music_df.dropna(subset=["genre", "popularity", "loudness", "liveness", "tempo"])
+
+# Import modules
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+
+# Instantiate an imputer
+imputer = SimpleImputer(strategy = 'most_frequent')
+
+# Instantiate a knn model
+knn = KNeighborsClassifier(n_neighbors=3)
+
+# Build steps for the pipeline
+steps = [("imputer", imputer), 
+        ("knn", knn)]
+
+
+steps = [("imputer", imp_mean),
+        ("knn", knn)]
+
+# Create the pipeline
+pipeline = Pipeline(steps)
+
+# Fit the pipeline to the training data
+pipeline.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = pipeline.predict(X_test)
+
+# Print the confusion matrix
+print(confusion_matrix(y_test, y_pred))
